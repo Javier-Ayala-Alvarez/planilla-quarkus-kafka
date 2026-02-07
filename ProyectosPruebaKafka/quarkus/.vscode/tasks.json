@@ -1,0 +1,147 @@
+// See https://go.microsoft.com/fwlink/?LinkId=733558
+// for the documentation about the tasks.json format
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"owner": "quarkus",
+					"fileLocation": [
+						"relative",
+						"${workspaceFolder}/src/main/resources/templates"
+					],
+					"pattern": [
+						{
+							"regexp": "\\[(\\d+)\\]\\s(.*):(\\d+):(\\d+)\\s\\-\\s{(.*)}:\\s(.*)$",
+							"file": 2,
+							"line": 3,
+							"column": 4,
+							"message": 6
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^.*Scanning for projects...",
+						"endsPattern": "(^.*Quarkus .* started in .*\\.)|(^.* ERROR .* Failed to start)"
+					}
+				}
+			],
+			"group": "build",
+			"label": "quarkus:dev (quarkus-kafka-produce\\quarkus-kafka-produce)",
+			"command": "./mvnw quarkus:dev ",
+			"windows": {
+				"command": ".\\mvnw.cmd quarkus:dev "
+			},
+			"options": {
+				"cwd": "quarkus-kafka-produce\\quarkus-kafka-produce"
+			}
+		},
+		{
+			"type": "shell",
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"owner": "quarkus",
+					"fileLocation": [
+						"relative",
+						"${workspaceFolder}/src/main/resources/templates"
+					],
+					"pattern": [
+						{
+							"regexp": "\\[(\\d+)\\]\\s(.*):(\\d+):(\\d+)\\s\\-\\s{(.*)}:\\s(.*)$",
+							"file": 2,
+							"line": 3,
+							"column": 4,
+							"message": 6
+						}
+					],
+					"background": {
+						"activeOnStart": true
+					}
+				}
+			],
+			"group": "build",
+			"label": "package -Pnative (quarkus-kafka-produce\\quarkus-kafka-produce)",
+			"command": "./mvnw package -Pnative ",
+			"windows": {
+				"command": ".\\mvnw.cmd package -Pnative "
+			},
+			"options": {
+				"cwd": "quarkus-kafka-produce\\quarkus-kafka-produce"
+			}
+		},
+		{
+			"type": "shell",
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"owner": "quarkus",
+					"fileLocation": [
+						"relative",
+						"${workspaceFolder}/src/main/resources/templates"
+					],
+					"pattern": [
+						{
+							"regexp": "\\[(\\d+)\\]\\s(.*):(\\d+):(\\d+)\\s\\-\\s{(.*)}:\\s(.*)$",
+							"file": 2,
+							"line": 3,
+							"column": 4,
+							"message": 6
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^.*Scanning for projects...",
+						"endsPattern": "(^.*Quarkus .* started in .*\\.)|(^.* ERROR .* Failed to start)"
+					}
+				}
+			],
+			"group": "build",
+			"label": "quarkus:dev (quarkus-kafka-consumer\\quarkus-kafka-consumer)",
+			"command": "./mvnw quarkus:dev ",
+			"windows": {
+				"command": ".\\mvnw.cmd quarkus:dev "
+			},
+			"options": {
+				"cwd": "quarkus-kafka-consumer\\quarkus-kafka-consumer"
+			}
+		},
+		{
+			"type": "shell",
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"owner": "quarkus",
+					"fileLocation": [
+						"relative",
+						"${workspaceFolder}/src/main/resources/templates"
+					],
+					"pattern": [
+						{
+							"regexp": "\\[(\\d+)\\]\\s(.*):(\\d+):(\\d+)\\s\\-\\s{(.*)}:\\s(.*)$",
+							"file": 2,
+							"line": 3,
+							"column": 4,
+							"message": 6
+						}
+					],
+					"background": {
+						"activeOnStart": true
+					}
+				}
+			],
+			"group": "build",
+			"label": "package -Pnative (quarkus-kafka-consumer\\quarkus-kafka-consumer)",
+			"command": "./mvnw package -Pnative ",
+			"windows": {
+				"command": ".\\mvnw.cmd package -Pnative "
+			},
+			"options": {
+				"cwd": "quarkus-kafka-consumer\\quarkus-kafka-consumer"
+			}
+		}
+	]
+}
