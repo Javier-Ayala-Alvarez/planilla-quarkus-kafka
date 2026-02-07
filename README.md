@@ -1,360 +1,319 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kafka + Quarkus - Sistema de Procesamiento de Ordenes</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin: 0;
-      background: linear-gradient(180deg, #020617, #0f172a);
-      color: #e2e8f0;
-      line-height: 1.7;
-    }
+# 🚀 Planilla Quarkus + Kafka
 
-    .container {
-      max-width: 1150px;
-      margin: auto;
-      padding: 50px 24px;
-    }
+### Arquitectura basada en eventos para procesamiento asincrónico de órdenes
 
-    h1, h2, h3 {
-      color: #38bdf8;
-      margin-top: 40px;
-    }
+![Java](https://img.shields.io/badge/Java-21-red)
+![Quarkus](https://img.shields.io/badge/Quarkus-3.x-blue)
+![Kafka](https://img.shields.io/badge/Apache-Kafka-black)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-    h1 {
-      font-size: 2.7rem;
-      text-align: center;
-      margin-bottom: 8px;
-    }
+------------------------------------------------------------------------
 
-    .subtitle {
-      text-align: center;
-      color: #94a3b8;
-      margin-bottom: 50px;
-      font-size: 1.1rem;
-    }
+## 📌 Descripción
 
-    .card {
-      background: rgba(17,24,39,0.8);
-      backdrop-filter: blur(6px);
-      border-radius: 18px;
-      padding: 26px;
-      margin-top: 22px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
-      border: 1px solid rgba(148,163,184,0.08);
-    }
+Este proyecto demuestra cómo construir un **sistema distribuido
+moderno** utilizando **Apache Kafka** y **Quarkus**, implementando
+comunicación asincrónica entre microservicios mediante eventos.
 
-    .highlight {
-      background: rgba(56,189,248,0.08);
-      border-left: 4px solid #38bdf8;
-      padding: 14px;
-      border-radius: 10px;
-      margin: 15px 0;
-    }
+Simula un flujo real de procesamiento de órdenes donde:
 
-    code {
-      background: #020617;
-      padding: 4px 7px;
-      border-radius: 6px;
-      color: #7dd3fc;
-      font-size: 0.9rem;
-    }
+✅ Un Producer recibe solicitudes HTTP\
+✅ Publica eventos en Kafka\
+✅ Un Consumer procesa las órdenes\
+✅ Se notifica el resultado mediante otro topic\
+✅ Soporta Dead Letter Queue para errores
 
-    pre {
-      background: #020617;
-      padding: 18px;
-      border-radius: 14px;
-      overflow-x: auto;
-      border: 1px solid #1e293b;
-      margin-top: 12px;
-    }
+👉 Ideal como proyecto de **portafolio backend** para demostrar
+conocimientos en:
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
+-   Microservicios\
+-   Event Driven Architecture\
+-   Mensajería con Kafka\
+-   Programación reactiva\
+-   Docker
 
-    th, td {
-      padding: 14px;
-      border-bottom: 1px solid #1e293b;
-      text-align: left;
-    }
+------------------------------------------------------------------------
 
-    th {
-      background: #020617;
-      color: #38bdf8;
-    }
+## 🧠 Arquitectura
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 22px;
-    }
+    Kafka (Topic: orders)
 
-    .step {
-      background: rgba(2,6,23,0.6);
-      padding: 18px;
-      border-radius: 14px;
-      margin-top: 16px;
-      border: 1px solid rgba(148,163,184,0.08);
-    }
+    [ Producer ] --POST /orders--> [ orders ] -----> [ Consumer ]
+       :8081                                      :8082
+                                                      |
+                         Kafka (orders-status)        |
+    [ Producer ] <----------- status <---------------|
 
-    .badge {
-      display: inline-block;
-      background: #0369a1;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      margin: 4px;
-    }
+------------------------------------------------------------------------
 
-    a {
-      color: #38bdf8;
-      text-decoration: none;
-    }
+## 🧩 Microservicios
 
-    a:hover {
-      text-decoration: underline;
-    }
+### 📤 Producer
 
-    .footer {
-      text-align: center;
-      margin-top: 70px;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+-   Endpoint `POST /orders`
+-   Publica eventos en Kafka
+-   Configurado con `acks=all`
+-   Escucha estados desde `orders-status`
+-   Retorna **HTTP 202 ACCEPTED**
 
-    <h1>🚀 Kafka + Quarkus</h1>
-    <p class="subtitle">Arquitectura basada en eventos para procesamiento asincrónico de órdenes</p>
+**Puerto:** `8081`
 
-    <div class="card">
-      <h2>📌 Descripción General</h2>
-      <p>
-        Este proyecto demuestra cómo construir un <strong>sistema distribuido moderno</strong> utilizando <strong>Apache Kafka</strong> y <strong>Quarkus</strong>.
-        Implementa comunicación asincrónica entre microservicios mediante eventos, simulando un flujo real de órdenes de compra.
-      </p>
+------------------------------------------------------------------------
 
-      <div class="highlight">
-        💡 Ideal como proyecto de portafolio para demostrar conocimientos en <strong>microservicios</strong>, <strong>event-driven architecture</strong> y <strong>mensajería con Kafka</strong>.
-      </div>
+### 📥 Consumer
 
-      <h3>Arquitectura</h3>
-      <pre>
-Kafka (Topic: orders)
-[Producer] ──POST /orders──> [orders] ──────> [Consumer]
-(puerto 8081)                               (puerto 8082)
-                                                  │
-                   Kafka (Topic: orders-status)   │
-[Producer] <──────────── [orders-status] <────────┘
-(Log de notificación)
-      </pre>
-    </div>
+-   Consume eventos desde `orders`
+-   Aplica reglas de negocio
+-   Publica resultados
+-   Manejo de errores
+-   Dead Letter Queue
+-   Reintentos automáticos
 
-    <h2>🧩 Microservicios</h2>
+**Puerto:** `8082`
 
-    <div class="grid">
-      <div class="card">
-        <h3>📤 Producer</h3>
-        <ul>
-          <li>Endpoint <code>POST /orders</code> (Puerto <code>8081</code>)</li>
-          <li>Publica eventos en Kafka</li>
-          <li>Respuesta HTTP <code>202 ACCEPTED</code></li>
-          <li>Escucha estados desde <code>orders-status</code></li>
-          <li>Configurado con <code>acks=all</code></li>
-        </ul>
-      </div>
+------------------------------------------------------------------------
 
-      <div class="card">
-        <h3>📥 Consumer</h3>
-        <ul>
-          <li>Consume eventos desde <code>orders</code></li>
-          <li>Valida reglas de negocio</li>
-          <li>Publica resultados</li>
-          <li>Soporte Dead Letter Queue</li>
-          <li>Reintentos automáticos</li>
-          <li>Puerto <code>8082</code></li>
-        </ul>
-      </div>
-    </div>
+## 🛠️ Tecnologías
 
-    <div class="card">
-      <h2>🛠️ Tecnologías</h2>
-      <table>
-        <tr><th>Tecnología</th><th>Versión</th></tr>
-        <tr><td>Java</td><td>21</td></tr>
-        <tr><td>Quarkus</td><td>3.31.2</td></tr>
-        <tr><td>Apache Kafka</td><td>3.7.0</td></tr>
-        <tr><td>Maven</td><td>3.9+</td></tr>
-        <tr><td>Docker Compose</td><td>3.8</td></tr>
-      </table>
+  Tecnología       Versión
+  ---------------- ---------
+  Java             21
+  Quarkus          3.x
+  Apache Kafka     3.x
+  Maven            3.9+
+  Docker Compose   3.8
 
-      <h3>Dependencias Clave</h3>
-      <span class="badge">quarkus-rest</span>
-      <span class="badge">kafka</span>
-      <span class="badge">reactive-messaging</span>
-      <span class="badge">jackson</span>
-      <span class="badge">CDI</span>
-    </div>
+### Dependencias principales
 
-    <div class="card">
-      <h2>✅ Prerrequisitos</h2>
-      <ul>
-        <li>Java 21</li>
-        <li>Docker Desktop</li>
-        <li>Maven o Maven Wrapper</li>
-        <li>Postman / Insomnia</li>
-      </ul>
-    </div>
+-   Quarkus REST
+-   Reactive Messaging
+-   Kafka Client
+-   Jackson
+-   CDI
 
-    <div class="card">
-      <h2>📁 Estructura del Proyecto</h2>
-      <pre>
-kafka-quarkus/
- ├── docker-compose.yml
- ├── quarkus-kafka-produce/
- └── quarkus-kafka-consumer/
-      </pre>
+------------------------------------------------------------------------
 
-      <div class="highlight">
-        👉 <strong>IMPORTANTE:</strong> El archivo <code>docker-compose.yml</code> debe ejecutarse desde la carpeta raíz del proyecto.
-      </div>
-    </div>
+## ✅ Prerrequisitos
 
-    <div class="card">
-      <h2>🐳 Levantar el Ambiente (Paso a Paso)</h2>
+Antes de iniciar asegúrate de tener instalado:
 
-      <div class="step">
-        <h3>1️⃣ Posicionarse en la carpeta raíz</h3>
-        <pre>cd ruta/donde/clonaste/kafka-quarkus</pre>
+-   ✅ Java 21\
+-   ✅ Docker Desktop\
+-   ✅ Maven (o Maven Wrapper)\
+-   ✅ Git
 
-        Verificá que exista el archivo:
-        <pre>docker-compose.yml</pre>
-      </div>
+Verifica:
 
-      <div class="step">
-        <h3>2️⃣ Iniciar Kafka y Kafdrop</h3>
-        <pre>docker compose up -d</pre>
+``` bash
+java -version
+docker --version
+```
 
-        Esto iniciará:
-        <ul>
-          <li>Kafka Broker</li>
-          <li>Zookeeper (si aplica)</li>
-          <li>Kafdrop (UI Web)</li>
-        </ul>
+------------------------------------------------------------------------
 
-        Verificar contenedores:
-        <pre>docker compose ps</pre>
-      </div>
+# 🐳 Levantar el Ambiente (IMPORTANTE)
 
-      <div class="step">
-        <h3>3️⃣ Acceder a la UI de Kafka</h3>
-        <p>
-          Abrí tu navegador:
-          👉 <a href="http://localhost:9000">http://localhost:9000</a>
-        </p>
-      </div>
+## 1️⃣ Clonar el repositorio
 
-      <div class="step">
-        <h3>4️⃣ Ejecutar el Producer</h3>
-        <pre>
+``` bash
+git clone https://github.com/Javier-Ayala-Alvarez/planilla-quarkus-kafka.git
+```
+
+------------------------------------------------------------------------
+
+## 2️⃣ Posicionarse en la carpeta raíz
+
+Debes estar donde existe el archivo:
+
+    docker-compose.yml
+
+Ejemplo:
+
+``` bash
+cd planilla-quarkus-kafka
+```
+
+Verifica:
+
+``` bash
+ls
+```
+
+Debe aparecer:
+
+    docker-compose.yml
+    quarkus-kafka-produce
+    quarkus-kafka-consumer
+
+------------------------------------------------------------------------
+
+## 3️⃣ Levantar Kafka
+
+``` bash
+docker compose up -d
+```
+
+Esto iniciará:
+
+✅ Kafka Broker\
+✅ Zookeeper (si aplica)\
+✅ Kafdrop (UI web)
+
+------------------------------------------------------------------------
+
+## 4️⃣ Verificar contenedores
+
+``` bash
+docker compose ps
+```
+
+------------------------------------------------------------------------
+
+## 5️⃣ Acceder a la UI de Kafka
+
+Abre tu navegador:
+
+👉 http://localhost:9000
+
+Desde aquí puedes visualizar:
+
+-   Topics\
+-   Mensajes\
+-   Brokers
+
+------------------------------------------------------------------------
+
+# ▶️ Ejecutar los Microservicios
+
+## Producer
+
+Nueva terminal:
+
+``` bash
 cd quarkus-kafka-produce
 ./mvnw quarkus:dev
-        </pre>
+```
 
-        Windows:
-        <pre>mvnw.cmd quarkus:dev</pre>
-      </div>
+Windows:
 
-      <div class="step">
-        <h3>5️⃣ Ejecutar el Consumer</h3>
-        <pre>
+``` bash
+mvnw.cmd quarkus:dev
+```
+
+------------------------------------------------------------------------
+
+## Consumer
+
+Otra terminal:
+
+``` bash
 cd quarkus-kafka-consumer
 ./mvnw quarkus:dev
-        </pre>
-      </div>
+```
 
-      <div class="highlight">
-        ⚠️ Ejecutá Producer y Consumer en terminales separadas.
-      </div>
+⚠️ Ejecuta ambos en terminales separadas.
 
-    </div>
+------------------------------------------------------------------------
 
-    <div class="card">
-      <h2>🧪 Pruebas con Postman / Insomnia</h2>
+# 🧪 Pruebas con Postman / Insomnia
 
-      <div class="highlight">
-        👉 <strong>Base URL:</strong> <code>http://localhost:8081</code>
-      </div>
+## Endpoint
 
-      <h3>📌 Endpoint</h3>
-      <pre>POST http://localhost:8081/orders</pre>
+    POST http://localhost:8081/orders
 
-      <strong>Headers:</strong>
-      <pre>Content-Type: application/json</pre>
+### Headers
 
-      <h3>✅ Caso 1 — Orden válida</h3>
-      <pre>{
+    Content-Type: application/json
+
+------------------------------------------------------------------------
+
+## ✅ Orden válida
+
+``` json
+{
   "id": "ORD-001",
   "amount": 150.50
-}</pre>
+}
+```
 
-      <strong>Respuesta esperada:</strong>
-      <pre>HTTP 202 ACCEPTED</pre>
+**Respuesta esperada:**
 
-      <div class="step">
-        Flujo interno:
-        <ul>
-          <li>Producer recibe la petición</li>
-          <li>Publica el evento en Kafka (<code>orders</code>)</li>
-          <li>Consumer procesa la orden</li>
-          <li>Se publica el estado en <code>orders-status</code></li>
-        </ul>
-      </div>
+    HTTP 202 ACCEPTED
 
-      <h3>❌ Caso 2 — Orden inválida</h3>
-      <pre>{
+### Flujo interno:
+
+1.  Producer recibe la petición\
+2.  Publica en `orders`\
+3.  Consumer procesa\
+4.  Publica estado en `orders-status`
+
+------------------------------------------------------------------------
+
+## ❌ Orden inválida
+
+``` json
+{
   "id": "ORD-002",
   "amount": -10
-}</pre>
+}
+```
 
-      <strong>Importante:</strong>
-      <ul>
-        <li>El Producer igual responde <code>202</code> porque el mensaje fue enviado correctamente.</li>
-        <li>El rechazo ocurre en el Consumer.</li>
-        <li>El mensaje se envía automáticamente al <code>orders-dead-letter</code>.</li>
-      </ul>
-    </div>
+📌 Importante:
 
-    <div class="card">
-      <h2>📊 Topics</h2>
-      <table>
-        <tr><th>Topic</th><th>Descripción</th></tr>
-        <tr><td>orders</td><td>Eventos enviados</td></tr>
-        <tr><td>orders-status</td><td>Resultados del procesamiento</td></tr>
-        <tr><td>orders-dead-letter</td><td>Mensajes fallidos</td></tr>
-      </table>
-    </div>
+-   El Producer responderá **202**
+-   El error ocurre en el Consumer
+-   El mensaje se envía automáticamente al:
 
-    <div class="card">
-      <h2>🛑 Detener el Ambiente</h2>
-      <pre>docker compose down</pre>
+```{=html}
+<!-- -->
+```
+    orders-dead-letter
 
-      Para eliminar volúmenes (reset total):
-      <pre>docker compose down -v</pre>
-    </div>
+------------------------------------------------------------------------
 
-    <p class="footer">
-      Arquitectura moderna ⚡ Event Driven • Microservices • Kafka • Quarkus
-    </p>
+# 📊 Topics
 
-  </div>
-</body>
-</html>
+  Topic                Descripción
+  -------------------- -----------------------------
+  orders               Eventos enviados
+  orders-status        Resultado del procesamiento
+  orders-dead-letter   Mensajes fallidos
+
+------------------------------------------------------------------------
+
+# 🛑 Detener el Ambiente
+
+``` bash
+docker compose down
+```
+
+### Reset total (elimina volúmenes)
+
+``` bash
+docker compose down -v
+```
+
+------------------------------------------------------------------------
+
+# 📁 Estructura del Proyecto
+
+    planilla-quarkus-kafka
+    │
+    ├── docker-compose.yml
+    ├── quarkus-kafka-produce
+    └── quarkus-kafka-consumer
+
+------------------------------------------------------------------------
+
+# ⭐ Por qué este proyecto es valioso
+
+Este tipo de arquitectura es utilizada por empresas que manejan **alto
+volumen de datos**, como:
+
+-   Fintech\
+-   E-commerce\
+-   Bancos\
+-   Sistemas de logística
+
+Demuestra habilidades reales de ingeniería backend moderna.
